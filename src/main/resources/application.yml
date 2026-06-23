@@ -3,12 +3,12 @@ server:
 
 spring:
   application:
-    name: user-service
+    name: prediction-service
 
   datasource:
-    url: jdbc:mysql://localhost:3305/prediction_db
-    username: root
-    password: BarthaAlma2002
+    url: ${DB_URL:jdbc:mysql://localhost:3305/prediction_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:BarthaAlma2002}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -26,5 +26,5 @@ management:
         include: health
 
 services:
-  user-service-url: http://localhost:8081
-  match-service-url: http://localhost:8082
+  user-service-url: ${USER_SERVICE_URL:http://localhost:8081}
+  match-service-url: ${MATCH_SERVICE_URL:http://localhost:8082}

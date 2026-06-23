@@ -1,0 +1,34 @@
+services:
+  prediction-db:
+    image: mysql:8.0
+    container_name: prediction-db
+    environment:
+      MYSQL_DATABASE: prediction_db
+      MYSQL_ROOT_PASSWORD: BarthaAlma2002
+    ports:
+      - "3309:3306"
+    volumes:
+      - prediction-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pBarthaAlma2002"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  prediction-service:
+    image: worldcup-prediction-service:1.0
+    container_name: prediction-service
+    depends_on:
+      prediction-db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://prediction-db:3306/prediction_db
+      DB_USERNAME: root
+      DB_PASSWORD: BarthaAlma2002
+      USER_SERVICE_URL: http://host.docker.internal:8081
+      MATCH_SERVICE_URL: http://host.docker.internal:8082
+    ports:
+      - "8083:8083"
+
+volumes:
+  prediction-db-data:
