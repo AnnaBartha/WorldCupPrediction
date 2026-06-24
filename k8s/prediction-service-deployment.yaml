@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prediction-db-secret
+type: Opaque
+stringData:
+  DB_PASSWORD: BarthaAlma2002
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prediction-service-config
+data:
+  DB_URL: jdbc:mysql://prediction-db:3306/prediction_db
+  DB_USERNAME: root
+  USER_SERVICE_URL: http://user-service:8081
+  MATCH_SERVICE_URL: http://match-service:8082
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prediction-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prediction-db
+  template:
+    metadata:
+      labels:
+        app: prediction-db
+    spec:
+      containers:
+        - name: prediction-db
+          image: mysql:8.0
+          env:
+            - name: MYSQL_DATABASE
+              value: prediction_db
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prediction-db-secret
+                  key: DB_PASSWORD
+          ports:
+            - containerPort: 3306
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prediction-db
+spec:
+  selector:
+    app: prediction-db
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prediction-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prediction-service
+  template:
+    metadata:
+      labels:
+        app: prediction-service
+    spec:
+      containers:
+        - name: prediction-service
+          image: barthaanna2002/worldcup-prediction-service:1.0
+          env:
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: prediction-service-config
+                  key: DB_URL
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: prediction-service-config
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prediction-db-secret
+                  key: DB_PASSWORD
+            - name: USER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: prediction-service-config
+                  key: USER_SERVICE_URL
+            - name: MATCH_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: prediction-service-config
+                  key: MATCH_SERVICE_URL
+          ports:
+            - containerPort: 8083
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prediction-service
+spec:
+  selector:
+    app: prediction-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+  type: NodePort
