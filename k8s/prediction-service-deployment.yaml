@@ -75,7 +75,8 @@ spec:
     spec:
       containers:
         - name: prediction-service
-          image: barthaanna2002/worldcup-prediction-service:1.0
+          image: barthaanna2002/worldcup-prediction-service:latest
+          imagePullPolicy: Always
           env:
             - name: DB_URL
               valueFrom:
